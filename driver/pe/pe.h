@@ -1,5 +1,50 @@
 #pragma once
 
+#define WIN_1507 10240
+#define WIN_1511 10586
+#define WIN_1607 14393
+#define WIN_1703 15063
+#define WIN_1709 16299
+#define WIN_1803 17134
+#define WIN_1809 17763
+#define WIN_1903 18362
+#define WIN_1909 18363
+#define WIN_2004 19041
+#define WIN_20H2 19042
+#define WIN_21H1 19043
+#define WIN_21H2 19044
+#define WIN_22H2 19045
+#define WIN_1121H2 22000
+#define WIN_1122H2 22621
+
+#define WINDOWS_NUMBER_7 7
+#define WINDOWS_NUMBER_8 8
+#define WINDOWS_NUMBER_8_1 9
+#define WINDOWS_NUMBER_10 10
+#define WINDOWS_NUMBER_11 11
+
+#define IMAGE_DOS_SIGNATURE                 0x5A4D
+#define IMAGE_NT_SIGNATURE                  0x00004550
+
+#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES    16
+
+#define IMAGE_DIRECTORY_ENTRY_EXPORT          0   // Export Directory
+#define IMAGE_DIRECTORY_ENTRY_IMPORT          1   // Import Directory
+#define IMAGE_DIRECTORY_ENTRY_RESOURCE        2   // Resource Directory
+#define IMAGE_DIRECTORY_ENTRY_EXCEPTION       3   // Exception Directory
+#define IMAGE_DIRECTORY_ENTRY_SECURITY        4   // Security Directory
+#define IMAGE_DIRECTORY_ENTRY_BASERELOC       5   // Base Relocation Table
+#define IMAGE_DIRECTORY_ENTRY_DEBUG           6   // Debug Directory
+#define IMAGE_DIRECTORY_ENTRY_ARCHITECTURE    7   // Architecture Specific Data
+
+#define IMAGE_DIRECTORY_ENTRY_GLOBALPTR       8   // RVA of GP
+#define IMAGE_DIRECTORY_ENTRY_TLS             9   // TLS Directory
+#define IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG    10   // Load Configuration Directory
+#define IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT   11   // Bound Import Directory in headers
+#define IMAGE_DIRECTORY_ENTRY_IAT            12   // Import Address Table
+#define IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT   13   // Delay Load Import Descriptors
+#define IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR 14   // COM Runtime descriptor
+
 typedef struct _PEB_LDR_DATA
 {
     BYTE Reserved1[ 8 ];
@@ -222,3 +267,39 @@ typedef struct _RTL_PROCESS_MODULES
 	RTL_PROCESS_MODULE_INFORMATION Modules[ 1 ];
 
 } RTL_PROCESS_MODULES, * PRTL_PROCESS_MODULES;
+
+typedef union _PS_PROTECTION
+{
+	UCHAR Level;
+	struct
+	{
+		int Type : 3;
+		int Audit : 1;
+		int Signer : 4;
+	} Flags;
+} PS_PROTECTION, * PPS_PROTECTION;
+
+typedef enum _PS_PROTECTED_SIGNER
+{
+	PsProtectedSignerNone = 0,
+	PsProtectedSignerAuthenticode = 1,
+	PsProtectedSignerCodeGen = 2,
+	PsProtectedSignerAntimalware = 3,
+	PsProtectedSignerLsa = 4,
+	PsProtectedSignerWindows = 5,
+	PsProtectedSignerWinTcb = 6,
+	PsProtectedSignerWinSystem = 7,
+	PsProtectedSignerApp = 8,
+	PsProtectedSignerMax = 9
+} PS_PROTECTED_SIGNER;
+
+typedef enum _PS_PROTECTED_TYPE
+{
+	PsProtectedTypeNone = 0,
+	PsProtectedTypeProtectedLight = 1,
+	PsProtectedTypeProtected = 2,
+	PsProtectedTypeMax = 3
+
+} PS_PROTECTED_TYPE;
+
+typedef  NTSTATUS( NTAPI* t_RtlGetVersion )( PRTL_OSVERSIONINFOW lpVersionInformation );

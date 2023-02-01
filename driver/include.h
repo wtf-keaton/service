@@ -6,10 +6,10 @@
 #include <ntstrsafe.h>
 
 #pragma once( lib, "ntstrsafe.lib" )
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
-#define TRACE(str, ...) DbgPrintEx(0, 0, _(str"\n"), __VA_ARGS__)
+#define TRACE(str, ...) DbgPrintEx(0, 0, str"\n", __VA_ARGS__)
 #else
 #define TRACE(...)
 #endif
@@ -30,6 +30,9 @@
 #include "memory/memory.h"
 
 #include "logging/logging.h"
+
+#include "security/hide_process.h"
+#include "security/protect_process.h"
 
 #include "hook/function.h"
 

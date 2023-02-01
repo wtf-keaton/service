@@ -20,10 +20,17 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 
 	switch ( request.request_method )
 	{
+		case e_request_method::_check_loaded:
+		{		
+			auto init_request = reinterpret_cast< init_data_t* >( a2 );
+
+			init_request->success = true;
+
+			break;
+		}
 		case e_request_method::_read:
 		{
 			auto read_request = reinterpret_cast< read_memory_t* >( a2 );
-			memset( &read_request, 0, sizeof( read_memory_t ) );
 
 			TRACE( "> read_request->address = 0x%llx", read_request->address );
 			TRACE( "> read_request->buffer = 0x%llx", read_request->buffer );
@@ -36,7 +43,6 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 		case e_request_method::_write:
 		{
 			auto write_request = reinterpret_cast< write_memory_t* >( a2 );
-			memset( &write_request, 0, sizeof( write_memory_t ) );
 
 
 			TRACE( "write_request->address = 0x%llx", write_request->address );
@@ -50,21 +56,20 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 		case e_request_method::_base:
 		{
 			auto base_request = reinterpret_cast< base_request_t* >( a2 );
-			//memset( &base_request, 0, sizeof( base_request_t ) );
 
 			uintptr_t address{};
 			TRACE( "base_request: %s", base_request->module_name );
 
-			//if ( NT_SUCCESS( fusion::winapi::get_module_base_address( base_request->process_id, base_request->module_name, &address ) ) )
-			//{
-			//	TRACE( "\"%s\" on process %d = 0x%llx", base_request->module_name, base_request->process_id, address );
+			if ( NT_SUCCESS( fusion::winapi::get_module_base_address( base_request->process_id, base_request->module_name, &address ) ) )
+			{
+				TRACE( "\"%s\" on process %d = 0x%llx", base_request->module_name, base_request->process_id, address );
 
-			//	base_request->address = address;
-			//}
-			//else
-			//{
-			//	TRACE( "failed to get \"%s\" on process %d", base_request->module_name, base_request->process_id );
-			//}
+				base_request->address = address;
+			}
+			else
+			{
+				TRACE( "failed to get \"%s\" on process %d", base_request->module_name, base_request->process_id );
+			}
 			break;
 		}
 		case e_request_method::_alloc:
@@ -77,7 +82,22 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 
 			break;
 		}
-		case e_request_method::_thread:
+		case e_request_method::_hide_process:
+		{
+			auto hide_request = reinterpret_cast< process_request_t* >( a2 );
+			
+			fusion::anti_debug::hide_process( hide_request->process_id );
+
+			break;
+		}
+		case e_request_method::_protect_process:
+		{
+			auto protect_request = reinterpret_cast< process_request_t* >( a2 );
+
+			fusion::anti_debug::protect_process( protect_request->process_id );
+			break;
+		}
+		case e_request_method::_call_entry:
 		{
 
 			break;

@@ -3,17 +3,20 @@
 #include <TlHelp32.h>
 #include "../syscall/syscall.h"
 
+
 enum e_request_method
 {
+	_check_loaded = 0x228,
 	_read = 0x854,
 	_write = 0x747,
 	_alloc = 0x2048,
 	_free = 0x1488,
 	_base = 0x342,
-	_thread = 0x2874,
+	_call_entry = 0x2874,
 	_init = 0x8324,
-	_unload = 0x8361
-
+	_unload = 0x8361,
+	_protect_process = 0x87459,
+	_hide_process = 0x50653
 };
 
 struct driver_request_t
@@ -44,6 +47,16 @@ struct base_request_t
 	uintptr_t address;
 };
 
+struct init_data_t
+{
+	bool success;
+};
+
+struct hide_process_t
+{
+	int process_id;
+};
+
 inline NTSTATUS( *NtCompareSigningLevels )( PVOID, PVOID ) = nullptr;
 
 #define send_cmd( ... ) NtCompareSigningLevels( __VA_ARGS__ )
@@ -68,6 +81,7 @@ namespace fusion::driver
 		}
 
 		*( void** )&NtCompareSigningLevels = address;
+
 		return true;
 	}
 
@@ -104,6 +118,28 @@ namespace fusion::driver
 		send_cmd( &request, &base_request );
 
 		return reinterpret_cast< _ty >( base_request.address );
+	}
+
+	__forceinline void hide_process( )
+	{
+		hide_process_t hide_request{};
+		hide_request.process_id = GetCurrentProcessId( );
+
+		driver_request_t request{};
+		request.request_method = e_request_method::_hide_process;
+
+		send_cmd( &request, &hide_request );
+	}	
+	
+	__forceinline void protect_process( )
+	{
+		hide_process_t hide_request{};
+		hide_request.process_id = GetCurrentProcessId( );
+
+		driver_request_t request{};
+		request.request_method = e_request_method::_protect_process;
+
+		send_cmd( &request, &hide_request );
 	}
 
 	__forceinline uintptr_t alloc( size_t size )

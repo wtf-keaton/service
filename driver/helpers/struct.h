@@ -2,14 +2,23 @@
 
 enum e_request_method
 {
+	_check_loaded = 0x228,
+
+	/*injection methods*/
 	_read = 0x854,
 	_write = 0x747,
 	_alloc = 0x2048,
 	_free = 0x1488,
 	_base = 0x342,
-	_thread = 0x2874,
+	_call_entry = 0x2874,
+
+	/*driver methods*/
 	_init = 0x8324,
-	_unload = 0x8361
+	_unload = 0x8361,
+
+	/*security methods*/
+	_protect_process = 0x87459,
+	_hide_process = 0x50653
 };
 
 struct base_request_t
@@ -40,6 +49,12 @@ struct write_memory_t
 	size_t size;
 };
 
+struct process_request_t
+{
+	int process_id;
+};
+
+
 struct alloc_memory_t
 {
 
@@ -52,7 +67,7 @@ struct free_memory_t
 
 struct init_data_t
 {
-	bool test;
+	bool success;
 };
 
 struct thread_init_t

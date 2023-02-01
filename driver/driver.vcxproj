@@ -102,6 +102,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <PreprocessorDefinitions>JM_XORSTR_DISABLE_AVX_INTRINSICS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EntryPointSymbol>driver_entry</EntryPointSymbol>
@@ -133,6 +134,8 @@
     <ClInclude Include="logging\logging.h" />
     <ClInclude Include="memory\memory.h" />
     <ClInclude Include="pe\pe.h" />
+    <ClInclude Include="security\hide_process.h" />
+    <ClInclude Include="security\protect_process.h" />
     <ClInclude Include="vcruntime\cstdint.h" />
     <ClInclude Include="vcruntime\string.h" />
     <ClInclude Include="winapi\winapi.h" />

@@ -13,7 +13,7 @@ namespace fusion::winapi
 			return reinterpret_cast< _ty >( moduleBase );
 		}
 
-		PRTL_PROCESS_MODULES modules = ( PRTL_PROCESS_MODULES ) ExAllocatePoolWithTag( NonPagedPool, info, 'NAZI' );
+		PRTL_PROCESS_MODULES modules = ( PRTL_PROCESS_MODULES ) ExAllocatePoolWithTag( NonPagedPool, info, 'NIGA' );
 
 		status = ZwQuerySystemInformation( SystemModuleInformation, modules, info, &info );
 
@@ -43,7 +43,7 @@ namespace fusion::winapi
 
 		if ( modules )
 		{
-			ExFreePoolWithTag( modules, 'NAZI' );
+			ExFreePoolWithTag( modules, 'NIGA' );
 		}
 
 		return reinterpret_cast< _ty >( moduleBase );
@@ -87,7 +87,7 @@ namespace fusion::winapi
 
 		for ( auto x = 0; x < header->FileHeader.NumberOfSections; x++, section++ )
 		{
-			if ( !memcmp( section->Name, ".text", 5 ) || !memcmp( section->Name, "PAGE", 4 ) )
+			if ( !memcmp( section->Name, _( ".text" ), 5 ) || !memcmp( section->Name, _( "PAGE" ), 4 ) )
 			{
 				auto addr = find_pattern<PBYTE>( ( PBYTE ) base_address + section->VirtualAddress, section->Misc.VirtualSize, pattern, mask );
 				if ( addr )
@@ -142,33 +142,130 @@ namespace fusion::winapi
 		return status;
 	}
 
-	//__forceinline uintptr_t	get_proc_address( const uintptr_t imageBase, const char* exportName )
-	//{
-	//	if ( !imageBase )
-	//		return 0;
+	__forceinline uintptr_t	get_proc_address( const uintptr_t imageBase, const char* exportName )
+	{
+		if ( !imageBase )
+			return 0;
 
-	//	if ( reinterpret_cast< PIMAGE_DOS_HEADER >( imageBase )->e_magic != 0x5A4D )
-	//		return 0;
+		if ( reinterpret_cast< PIMAGE_DOS_HEADER >( imageBase )->e_magic != 0x5A4D )
+			return 0;
 
-	//	const auto ntHeader = reinterpret_cast< PIMAGE_NT_HEADERS64 >( imageBase + reinterpret_cast< PIMAGE_DOS_HEADER >( imageBase )->e_lfanew );
-	//	const auto exportDirectory = reinterpret_cast< PIMAGE_EXPORT_DIRECTORY >( imageBase + ntHeader->OptionalHeader.DataDirectory[ 0 ].VirtualAddress );
-	//	if ( !exportDirectory )
-	//		return 0;
+		const auto ntHeader = reinterpret_cast< PIMAGE_NT_HEADERS64 >( imageBase + reinterpret_cast< PIMAGE_DOS_HEADER >( imageBase )->e_lfanew );
+		const auto exportDirectory = reinterpret_cast< PIMAGE_EXPORT_DIRECTORY >( imageBase + ntHeader->OptionalHeader.DataDirectory[ 0 ].VirtualAddress );
+		if ( !exportDirectory )
+			return 0;
 
-	//	const auto exportedFunctions = reinterpret_cast< DWORD* >( imageBase + exportDirectory->AddressOfFunctions );
-	//	const auto exportedNames = reinterpret_cast< DWORD* >( imageBase + exportDirectory->AddressOfNames );
-	//	const auto exportedNameOrdinals = reinterpret_cast< UINT16* >( imageBase + exportDirectory->AddressOfNameOrdinals );
+		const auto exportedFunctions = reinterpret_cast< DWORD* >( imageBase + exportDirectory->AddressOfFunctions );
+		const auto exportedNames = reinterpret_cast< DWORD* >( imageBase + exportDirectory->AddressOfNames );
+		const auto exportedNameOrdinals = reinterpret_cast< UINT16* >( imageBase + exportDirectory->AddressOfNameOrdinals );
 
-	//	for ( size_t i{}; i < exportDirectory->NumberOfNames; ++i )
-	//	{
-	//		const auto functionName = reinterpret_cast< const char* >( imageBase + exportedNames[ i ] );
-	//		if ( fusion::string::stricmp( exportName, functionName ) == 0 )
-	//		{
-	//			return imageBase + exportedFunctions[ exportedNameOrdinals[ i ] ];
-	//		}
-	//	}
+		for ( size_t i{}; i < exportDirectory->NumberOfNames; ++i )
+		{
+			const auto functionName = reinterpret_cast< const char* >( imageBase + exportedNames[ i ] );
+			if ( fusion::string::stricmp( exportName, functionName ) == 0 )
+			{
+				return imageBase + exportedFunctions[ exportedNameOrdinals[ i ] ];
+			}
+		}
 
-	//	return 0;
-	//}
+		return 0;
+	}
 
+	namespace offsets
+	{
+
+		static UINT offset_unique_process_id = 0x0;
+		static UINT offset_active_process_links = 0x0;
+		static UINT offset_image_file_name = 0x0;
+		static UINT offset_active_threads = 0x0;
+		static uint64_t* ps_initial_system_process = 0x0;
+
+		__forceinline bool setup( )
+		{
+			ps_initial_system_process = ( uint64_t* ) winapi::get_proc_address( winapi::get_module_handle<uintptr_t>( _( "ntoskrnl.exe" ) ), _( "PsInitialSystemProcess" ) );
+
+			PEPROCESS SystemProcess = ( PEPROCESS ) *ps_initial_system_process;
+
+			for ( int i = 0; i < 0xFFF; i++ ) // 0xFFF larger than the size of full struct
+			{
+				if ( !offset_unique_process_id && !offset_active_process_links )
+				{
+					if (
+						*( UINT64* ) ( ( UINT64 ) SystemProcess + i ) == 4 && // 4 always, pid of system process
+						*( UINT64* ) ( ( UINT64 ) SystemProcess + i + 0x8 ) > 0xFFFF000000000000 )  // > 0xFFFF000000000000 always
+					{
+						offset_unique_process_id = i;
+						offset_active_process_links = i + 0x8;
+					}
+				}
+				if ( !offset_image_file_name && !offset_active_threads )
+				{
+					if ( *( UINT64* ) ( ( UINT64 ) SystemProcess + i ) > 0x0000400000000000 && *( UINT64* ) ( ( UINT64 ) SystemProcess + i ) < 0x0000800000000000 && // 0x00006D6574737953 always, but better to make range
+						*( UINT64* ) ( ( UINT64 ) SystemProcess + i + 0x48 ) > 0 && *( UINT64* ) ( ( UINT64 ) SystemProcess + i + 0x48 ) < 0xFFF ) // 80 ~ 300 in general
+					{
+						offset_image_file_name = i;
+						offset_active_threads = i + 0x48;
+					}
+				}
+
+				if ( offset_unique_process_id && offset_active_process_links && offset_image_file_name && offset_active_threads )
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
+	__forceinline uint64_t get_windows_number( )
+	{
+		RTL_OSVERSIONINFOW  lpVersionInformation{ 0 };
+		lpVersionInformation.dwOSVersionInfoSize = sizeof( RTL_OSVERSIONINFOW );
+
+		auto RtlGetVersion = ( t_RtlGetVersion ) get_proc_address( get_module_handle<uintptr_t>( _( "ntoskrnl.exe" ) ), _( "RtlGetVersion" ) );
+		if ( RtlGetVersion )
+		{
+			RtlGetVersion( &lpVersionInformation );
+		}
+		else
+		{
+			auto buildNumber = ( PDWORD64 ) get_proc_address( get_module_handle<uintptr_t>( _( "ntoskrnl.exe" ) ), _( "NtBuildNumber" ) );
+
+			lpVersionInformation.dwBuildNumber = *buildNumber;
+			lpVersionInformation.dwMajorVersion = *( ULONG* ) 0xFFFFF7800000026C;
+			lpVersionInformation.dwMinorVersion = *( ULONG* ) 0xFFFFF78000000270;
+
+		}
+
+		if ( lpVersionInformation.dwBuildNumber >= WIN_1121H2 )
+			return WINDOWS_NUMBER_11;
+		else if ( lpVersionInformation.dwBuildNumber >= WIN_1507 && lpVersionInformation.dwBuildNumber <= WIN_21H2 )
+			return WINDOWS_NUMBER_10;
+	}
+
+	__forceinline  NTSTATUS get_eprocess( uint32_t procId, OUT PEPROCESS* pProcessInfo )
+	{
+
+		PEPROCESS SystemProcess = ( PEPROCESS ) *offsets::ps_initial_system_process;
+		PEPROCESS CurrentProcess = SystemProcess;
+
+		do
+		{
+			if ( *( uint64_t* ) ( ( UINT64 ) CurrentProcess + offsets::offset_unique_process_id ) == ( uint64_t ) procId )
+			{
+				if ( *( UINT* ) ( ( UINT64 ) CurrentProcess + offsets::offset_active_threads ) )
+				{
+					*pProcessInfo = CurrentProcess;
+					return STATUS_SUCCESS;
+				}
+			}
+
+			PLIST_ENTRY List = ( PLIST_ENTRY ) ( ( UINT64 ) ( CurrentProcess ) +offsets::offset_active_process_links );
+			CurrentProcess = ( PEPROCESS ) ( ( UINT64 ) List->Flink - offsets::offset_active_process_links );
+
+		} while ( CurrentProcess != SystemProcess );
+
+		return STATUS_NOT_FOUND;
+	}
 }

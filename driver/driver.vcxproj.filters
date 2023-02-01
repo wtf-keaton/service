@@ -63,6 +63,12 @@
     <ClInclude Include="include.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="security\hide_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="security\protect_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">
