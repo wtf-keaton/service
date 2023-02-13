@@ -7,7 +7,7 @@ namespace fusion::memory
 		size_t bytes{};
 		PEPROCESS target_process{};
 
-		PsLookupProcessByProcessId( process_handle, &target_process );
+		fusion::imports::ps_lookup_process_by_process_id( process_handle, &target_process );
 
 		return fusion::imports::mm_copy_virutal_memory( target_process, address, PsGetCurrentProcess( ), target, size, KernelMode, &bytes );
 	}
@@ -17,7 +17,7 @@ namespace fusion::memory
 		size_t bytes{};
 		PEPROCESS target_process{};
 
-		PsLookupProcessByProcessId( process_handle, &target_process );
+		fusion::imports::ps_lookup_process_by_process_id( process_handle, &target_process );
 		return fusion::imports::mm_copy_virutal_memory( PsGetCurrentProcess( ), address, target_process, target, size, KernelMode, &bytes );
 	}
 

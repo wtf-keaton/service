@@ -7,7 +7,7 @@
 
 #include "../syscall/syscall.h"
 
-bool drv_mapper::map_driver( const char* key )
+bool drv_mapper::map_driver( )
 {
 	binary_request_t binary{};
 	fusion::client::recv( &binary, sizeof binary );

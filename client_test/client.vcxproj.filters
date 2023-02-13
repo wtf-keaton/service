@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="connection\ca.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="connection\connection.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="driver\driver.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="hash\hash.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers\structs.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="mapper\driver.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="mapper\intel_wrapper.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\antidebug\antidebug.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\antidebug\bigbool.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\antidebug\testmode.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\antidebug\unhook.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\apiwrapper\apiwrapper.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\apiwrapper\syscall_stub.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\apiwrapper\windows_code.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\anti_main.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\ntapi.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\baka\struct.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\drivers\drivers.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\remapping\ntdll.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="syscall\syscall.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="xorstr\xorstr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="encryption\encryption.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\utils.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="security\remapping\remapping.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="mapper\driver_mapper.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="injector\injector.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="hwid\hwid.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="driver\global.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="driver\memory.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="driver\struct.hh">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="connection\connection.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="encryption\encryption.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="hwid\hwid.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="injector\injector.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="mapper\driver_mapper.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="mapper\intel_wrapper.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="security\drivers\drivers.cc">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="security\remapping\remapping.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="syscall\syscall.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\utils.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="entry.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="syscall\assembler.asm">
+      <Filter>Исходные файлы</Filter>
+    </MASM>
+  </ItemGroup>
+</Project>

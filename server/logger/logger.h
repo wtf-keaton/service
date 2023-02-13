@@ -61,26 +61,26 @@ namespace fusion::logger
 	template< typename ...Args >
 	void warn( const char* fmt, Args... args )
 	{
-		print( "[ warning ] ", fusion::logger::format( fmt, args... ).c_str( ), color_t::orange );
+		print( "warning >> ", fusion::logger::format( fmt, args... ).c_str( ), color_t::orange );
 	}
 
 	template< typename ...Args >
 	void error( const char* fmt, Args... args )
 	{
-		print( "[ error ] ", fusion::logger::format( fmt, args... ).c_str( ), color_t::red );
+		print( "error >> ", fusion::logger::format( fmt, args... ).c_str( ), color_t::red );
 	}	
 	
 	template< typename ...Args >
 	void info( const char* fmt, Args... args )
 	{
-		print( "[ info ] ", fusion::logger::format( fmt, args... ).c_str( ), color_t::dark_green );
+		print( "info >> ", fusion::logger::format( fmt, args... ).c_str( ), color_t::dark_green );
 	}
 
 	template< typename ...Args >
 	void debug( const char* fmt, Args... args )
 	{
 #ifdef DEBUG_OUTPUT
-		print( "[ debug ] ", fusion::logger::format( fmt, args... ).c_str( ), color_t::gray );
+		print( "debug >> ", fusion::logger::format( fmt, args... ).c_str( ), color_t::gray );
 #endif
 	}
 }

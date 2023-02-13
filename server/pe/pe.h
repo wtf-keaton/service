@@ -47,7 +47,33 @@ namespace fusion::pe
 			fusion::logger::info( "\"{}\" success inited", name );
 		}
 
-		void load_binary( )
+		bool initialize( const char* file_path )
+		{
+			fusion::logger::info( "initializing \"{}\" binary", file_path );
+
+			m_name = file_path;
+
+			if ( !fusion::file::read_file( file_path, m_buffer ) )
+			{
+				fusion::logger::error( "failed to load binary on path: \"{}\"", file_path );
+				return false;
+			}
+
+			m_image = reinterpret_cast< win::image_t<x64>* >( m_buffer.data( ) );
+
+			this->load_binary( );
+			fusion::logger::info( "\"{}\" success inited", file_path );
+
+			return true;
+		}
+
+		void shutdown( )
+		{
+			m_image = nullptr;
+			m_name = "";
+		}
+
+		_declspec( noinline ) void load_binary( )
 		{
 			parse_sections( );
 			parse_relocs( );
@@ -70,7 +96,7 @@ namespace fusion::pe
 			fusion::logger::debug( "success reload binaty with path: {}\n", m_name );
 		}
 
-		void parse_sections( )
+	    void parse_sections( )
 		{
 			const auto nt_header = m_image->get_nt_headers( );
 			const size_t n = nt_header->file_header.num_sections;

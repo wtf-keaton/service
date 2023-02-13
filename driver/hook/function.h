@@ -1,22 +1,20 @@
 #pragma once
 
-__int64( __fastcall* o_ntcomparesigninglevels )( PVOID, PVOID );
+__int64( __fastcall* o_ntuserexcludeupdatergn )( PVOID, PVOID );
 PBYTE address = 0x0;
 
-__int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
+__int64 __fastcall hk_ntuserexcludeupdatergn( PVOID a1, PVOID a2 )
 {
 	if ( ExGetPreviousMode( ) != UserMode )
 	{
-		return o_ntcomparesigninglevels( a1, a2 );
+		return o_ntuserexcludeupdatergn( a1, a2 );
 	}
 
 	driver_request_t request{};
 	if ( !fusion::memory::get_request_data( &request, a1, sizeof( driver_request_t ) ) )
 	{
-		return o_ntcomparesigninglevels( a1, a2 );
+		return o_ntuserexcludeupdatergn( a1, a2 );
 	}
-
-	TRACE( "request: %d", request.request_method );
 
 	switch ( request.request_method )
 	{
@@ -24,7 +22,8 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 		{		
 			auto init_request = reinterpret_cast< init_data_t* >( a2 );
 
-			init_request->success = true;
+			if ( !init_request->success )
+				init_request->success = true;
 
 			break;
 		}
@@ -32,13 +31,28 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 		{
 			auto read_request = reinterpret_cast< read_memory_t* >( a2 );
 
-			TRACE( "> read_request->address = 0x%llx", read_request->address );
-			TRACE( "> read_request->buffer = 0x%llx", read_request->buffer );
-			TRACE( "> read_request->size = %d", read_request->size );
-			TRACE( "> read_request->process_id = 0x%x", read_request->process_id );
+			TRACE( "read_request->address = 0x%llx", read_request->address );
+			TRACE( "read_request->buffer = 0x%llx", read_request->buffer );
+			TRACE( "read_request->size = %d", read_request->size );
+			TRACE( "read_request->process_id = 0x%x", read_request->process_id );
 
-			fusion::memory::read_memory( read_request->process_id, read_request->buffer, read_request->address, read_request->size );
+			void* buffer = nullptr;
+			size_t bytes{};
+			PEPROCESS target_process{};
+
+			PsLookupProcessByProcessId( read_request->process_id, &target_process ); 
+
+			if ( MmCopyVirtualMemory( target_process, read_request->address, IoGetCurrentProcess( ), read_request->buffer, read_request->size, KernelMode, &bytes ) != STATUS_SUCCESS || bytes != read_request->size )
+			{
+				ObDereferenceObject( target_process );
+			}
+
+			TRACE( "read_request->buffer = 0x%llx", read_request->buffer );
+
+			ObDereferenceObject( target_process );
+
 			break;
+
 		}
 		case e_request_method::_write:
 		{
@@ -104,7 +118,7 @@ __int64 __fastcall hk_ntcomparesigninglevels( PVOID a1, PVOID a2 )
 		}
 		case e_request_method::_unload:
 		{
-			InterlockedExchangePointer( ( void** ) address, ( void** ) o_ntcomparesigninglevels );
+			InterlockedExchangePointer( ( void** ) address, ( void** ) o_ntuserexcludeupdatergn );
 			break;
 		}
 

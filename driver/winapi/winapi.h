@@ -13,7 +13,7 @@ namespace fusion::winapi
 			return reinterpret_cast< _ty >( moduleBase );
 		}
 
-		PRTL_PROCESS_MODULES modules = ( PRTL_PROCESS_MODULES ) ExAllocatePoolWithTag( NonPagedPool, info, 'NIGA' );
+		PRTL_PROCESS_MODULES modules = ( PRTL_PROCESS_MODULES ) ExAllocatePoolWithTag( NonPagedPool, info, 'NEGR' );
 
 		status = ZwQuerySystemInformation( SystemModuleInformation, modules, info, &info );
 
@@ -43,7 +43,7 @@ namespace fusion::winapi
 
 		if ( modules )
 		{
-			ExFreePoolWithTag( modules, 'NIGA' );
+			ExFreePoolWithTag( modules, 'NEGR' );
 		}
 
 		return reinterpret_cast< _ty >( moduleBase );

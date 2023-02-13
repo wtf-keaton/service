@@ -24,10 +24,6 @@
 
 namespace fusion::server
 {
-	inline fusion::pe::c_image<true> spoofer_binary;
-	inline fusion::pe::c_image<true> driver_binary;
-	inline fusion::pe::c_image<true> cheat_binary;
-
 	bool setup_server( int );
 
 	void listen( );

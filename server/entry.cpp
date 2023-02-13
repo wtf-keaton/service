@@ -3,7 +3,6 @@
 
 int main( )
 {
-
 #ifdef SSL_ENABLE
 	fusion::logger::warn( "starting tls server" );
 #else
@@ -16,8 +15,6 @@ int main( )
 
 		return 0;
 	}
-
-	fusion::server::spoofer_binary = fusion::pe::c_image<true>( "test.sys" );
 
 	while ( true )
 	{

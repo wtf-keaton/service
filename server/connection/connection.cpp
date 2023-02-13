@@ -8,7 +8,7 @@ namespace fusion::server
 	SOCKET m_socket;
 	WSADATA m_wsa_data;
 	sockaddr_in client_info{};
-
+	pe::c_image<true> binary_t;
 #ifdef SSL_ENABLE
 	WOLFSSL* m_ssl;
 	WOLFSSL_CTX* ssl_ctx;
@@ -64,8 +64,8 @@ namespace fusion::server
 		auto m_client_socket = accept( m_socket, ( sockaddr* ) &client_info, &client_len );
 
 #ifdef SSL_ENABLE
-		auto cert = SSL_CTX_use_certificate_file( ssl_ctx, "cert.pem", SSL_FILETYPE_PEM );
-		auto key = SSL_CTX_use_PrivateKey_file( ssl_ctx, "key.pem", SSL_FILETYPE_PEM );
+		auto cert = SSL_CTX_use_certificate_file( ssl_ctx, "D:\\for sell\\loader-service\\service\\service\\bin\\release\\cert.pem", SSL_FILETYPE_PEM );
+		auto key = SSL_CTX_use_PrivateKey_file( ssl_ctx, "D:\\for sell\\loader-service\\service\\service\\bin\\release\\key.pem", SSL_FILETYPE_PEM );
 
 		m_ssl = SSL_new( ssl_ctx );
 		SSL_set_fd( m_ssl, m_client_socket );
@@ -144,12 +144,17 @@ namespace fusion::server
 				{
 					case e_binary_type::_driver:
 					{
-						binary_request_t binary{};
-						binary.size = spoofer_binary.image( )->get_nt_headers( )->optional_header.size_image;
-						binary.entry = spoofer_binary.image( )->get_nt_headers( )->optional_header.entry_point;
-						strcpy_s( binary.imports, spoofer_binary.get_imports( ).c_str( ) );
+						fusion::pe::c_image<true> binary;
+						if ( !binary.initialize( "D:\\for sell\\loader-service\\service\\service\\bin\\release\\test.sys" ) )
+						{
+							goto start;
+						}
+						binary_request_t binary_request{};
+						binary_request.size = binary.image( )->get_nt_headers( )->optional_header.size_image;
+						binary_request.entry = binary.image( )->get_nt_headers( )->optional_header.entry_point;
+						strcpy_s( binary_request.imports, binary.get_imports( ).c_str( ) );
 
-						fusion::server::send( ssl, &binary, sizeof( binary ) );
+						fusion::server::send( ssl, &binary_request, sizeof( binary_request ) );
 
 
 						uint64_t allocated_base = 0;
@@ -157,51 +162,62 @@ namespace fusion::server
 
 						fusion::logger::debug( "user \"{}\" allocated memory: 0x{:x}\n", user_ip, allocated_base );
 
-						std::string imports;
-						fusion::server::recv( ssl, imports );
-
-						std::vector<char> data;
-						spoofer_binary.get_binary( data );
-						spoofer_binary.relocate( data, allocated_base );
-						spoofer_binary.fix_imports( data, imports );
-
-						if ( fusion::server::send( ssl, data ) == data.size( ) )
+						if ( allocated_base )
 						{
-							fusion::logger::info( "Image success sended to user \"{}\"", user_ip );
-						}
+							std::string imports;
+							fusion::server::recv( ssl, imports );
 
+							std::vector<char> data;
+							binary.get_binary( data );
+							binary.relocate( data, allocated_base );
+							binary.fix_imports( data, imports );
+
+							if ( fusion::server::send( ssl, data ) == data.size( ) )
+							{
+								fusion::logger::info( "Image success sended to user \"{}\"", user_ip );
+							}
+						}
 						goto start;
 						break;
 					}
 					case e_binary_type::_cheat:
 					{
-						binary_request_t binary{};
-						binary.size = cheat_binary.image( )->get_nt_headers( )->optional_header.size_image;
-						binary.entry = cheat_binary.image( )->get_nt_headers( )->optional_header.entry_point;
+						fusion::pe::c_image<true> binary;
+						if ( !binary.initialize( "cheat.dll" ) )
+						{
+							goto start;
+						}
+						binary_request_t binary_request{};
+						binary_request.size = binary.image( )->get_nt_headers( )->optional_header.size_image;
+						binary_request.entry = binary.image( )->get_nt_headers( )->optional_header.entry_point;
 
-						strcpy_s( binary.imports, cheat_binary.get_imports( ).c_str( ) );
+						strcpy_s( binary_request.imports, binary.get_imports( ).c_str( ) );
 
-						fusion::server::send( ssl, &binary, sizeof( binary ) );
+						fusion::server::send( ssl, &binary_request, sizeof( binary_request ) );
 
 
 						uint64_t allocated_base = 0;
 						fusion::server::recv( ssl, &allocated_base, sizeof allocated_base );
 
-						fusion::logger::debug( "user \"{}\" allocated memory: 0x{:x}\n", user_ip, allocated_base );
+						fusion::logger::warn( "user \"{}\" allocated memory: 0x{:x}\n", user_ip, allocated_base );
 
-						std::string imports;
-						fusion::server::recv( ssl, imports );
-
-						std::vector<char> data{};
-						cheat_binary.get_binary( data );
-						cheat_binary.relocate( data, allocated_base );
-						cheat_binary.fix_imports( data, imports );
-
-						if ( fusion::server::send( ssl, data ) == data.size( ) )
+						if ( allocated_base )
 						{
-							fusion::logger::info( "Image success sended to user \"{}\"", user_ip );
+							std::string imports;
+							fusion::server::recv( ssl, imports );
+
+							std::vector<char> data{};
+							binary.get_binary( data );
+							binary.relocate( data, allocated_base );
+							binary.fix_imports( data, imports );
+
+							if ( fusion::server::send( ssl, data ) == data.size( ) )
+							{
+								fusion::logger::info( "Image success sended to user \"{}\"", user_ip );
+							}
 						}
 
+ 
 						goto start;
 						break;
 					}
@@ -210,28 +226,30 @@ namespace fusion::server
 				break;
 
 			case e_request_type::_ban_user:
-
+			{
+				fusion::logger::info( "user \"{}\" banned hwid {:x}", user_ip, request.active_hwid_hash );
 				break;
+			}
 		}
 	}
 
 #ifdef SSL_ENABLE
 	bool send( WOLFSSL* con_socket, void* buf, size_t size )
 	{
-		void* tmp = nullptr;
-		fusion::encrypt::crypt( buf, &tmp, size );
-		bool ret = wolfSSL_send( con_socket, reinterpret_cast< const char* >( tmp ), size * 2, 0 ) > 0;
-		free( tmp );
+		//void* tmp = nullptr;
+		//fusion::encrypt::crypt( buf, &tmp, size );
+		bool ret = wolfSSL_send( con_socket, buf, size, 0 ) > 0;
+		//free( tmp );
 
 		return ret;
 	}
 
 	bool recv( WOLFSSL* con_socket, void* buf, size_t size )
 	{
-		void* tmp = malloc( size * 2 );
-		bool ret = wolfSSL_recv( con_socket, reinterpret_cast< char* >( tmp ), size * 2, MSG_WAITALL ) > 0;
-		fusion::encrypt::decrypt( tmp, &buf, size * 2 );
-		free( tmp );
+		//void* tmp = malloc( size * 2 );
+		bool ret = wolfSSL_recv( con_socket, buf, size, MSG_WAITALL ) > 0;
+		//fusion::encrypt::decrypt( tmp, &buf, size * 2 );
+		//free( tmp );
 
 		return ret;
 	}
@@ -251,7 +269,7 @@ namespace fusion::server
 #ifdef SSL_ENABLE
 	int send( WOLFSSL* ssl, std::vector<char>& data, float* dur /*= nullptr*/ )
 #else
-	int stream( int ssl, std::vector<char>& data, float* dur /*= nullptr*/ )
+	int send( int ssl, std::vector<char>& data, float* dur /*= nullptr*/ )
 #endif
 	{
 		auto size = data.size( );
@@ -288,7 +306,7 @@ namespace fusion::server
 #ifdef SSL_ENABLE
 	int recv( WOLFSSL* ssl, std::vector<char>& out )
 #else
-	int read_stream( int ssl, std::vector<char>& out )
+	int recv( int ssl, std::vector<char>& out )
 #endif
 	{
 		size_t size;
@@ -320,7 +338,7 @@ namespace fusion::server
 #ifdef SSL_ENABLE
 	int recv( WOLFSSL* ssl, std::string& str )
 #else
-	int read_stream( int ssl, std::string& str )
+	int recv( int ssl, std::string& str )
 #endif
 	{
 		std::vector<char> out;
