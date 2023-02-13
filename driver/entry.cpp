@@ -11,17 +11,7 @@ NTSTATUS driver_entry( uintptr_t magic_key, PDRIVER_OBJECT driver_object )
 		return STATUS_ABANDONED;
 	}
 
-	PLARGE_INTEGER timeStamp;
-	LARGE_INTEGER localTimeStamp;
-	KeQueryTickCount( &timeStamp );
-
-	TRACE( "time stamp %d", timeStamp );
-
-
-	ExSystemTimeToLocalTime( timeStamp, &localTimeStamp );
-	TRACE( "local time stamp %d", localTimeStamp );
-
-	/*if ( fusion::winapi::offsets::setup( ) )
+	if ( fusion::winapi::offsets::setup( ) )
 	{
 		auto ntoskrnl = fusion::winapi::get_module_handle<void*>( _( "win32k.sys" ) );
 		TRACE( "ntoskrnl: 0x%llx", ntoskrnl );
@@ -43,7 +33,7 @@ NTSTATUS driver_entry( uintptr_t magic_key, PDRIVER_OBJECT driver_object )
 		*( void** ) &o_ntuserexcludeupdatergn = InterlockedExchangePointer( ( volatile PVOID* ) address, hk_ntuserexcludeupdatergn );
 
 		return STATUS_SUCCESS;
-	}*/
+	}
 
 	return STATUS_ACCESS_DENIED;
 }

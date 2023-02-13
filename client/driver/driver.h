@@ -57,30 +57,30 @@ struct hide_process_t
 	int process_id;
 };
 
-inline NTSTATUS( *NtCompareSigningLevels )( PVOID, PVOID ) = nullptr;
+inline NTSTATUS( *NtUserExcludeUpdateRgn )( PVOID, PVOID ) = nullptr;
 
-#define send_cmd( ... ) NtCompareSigningLevels( __VA_ARGS__ )
+#define send_cmd( ... ) NtUserExcludeUpdateRgn( __VA_ARGS__ )
 #pragma optimize( "", off )
 namespace fusion::driver
 {
 
 	bool init_driver( )
 	{
-		auto win32u = LoadLibraryA( "ntdll.dll" );
+		auto win32u = LoadLibraryA( "win32u.dll" );
 		if ( !win32u )
 		{
-			printf_s( "failed to load ntdll.dll\n" );
+			printf_s( "failed to load win32u.dll\n" );
 			return false;
 		}
 
-		auto address = GetProcAddress( win32u, "NtCompareSigningLevels" );
+		auto address = GetProcAddress( win32u, "NtUserExcludeUpdateRgn" );
 		if ( !address )
 		{
-			printf_s( "failed to get NtCompareSigningLevels\n" );
+			printf_s( "failed to get NtUserExcludeUpdateRgn\n" );
 			return false;
 		}
 
-		*( void** )&NtCompareSigningLevels = address;
+		*( void** )&NtUserExcludeUpdateRgn = address;
 
 		return true;
 	}

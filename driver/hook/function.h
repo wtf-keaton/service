@@ -22,8 +22,9 @@ __int64 __fastcall hk_ntuserexcludeupdatergn( PVOID a1, PVOID a2 )
 		{		
 			auto init_request = reinterpret_cast< init_data_t* >( a2 );
 
-			if ( !init_request->success )
-				init_request->success = true;
+			auto result = true;
+
+			init_request->success = true;
 
 			break;
 		}
