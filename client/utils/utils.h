@@ -16,4 +16,6 @@ namespace fusion::utils
 
 	void self_delete( );
 
+	uint64_t generate_mapper_token( );
+
 }

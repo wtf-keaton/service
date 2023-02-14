@@ -134,9 +134,12 @@
     <ClInclude Include="logging\logging.h" />
     <ClInclude Include="memory\memory.h" />
     <ClInclude Include="pe\pe.h" />
+    <ClInclude Include="pte\pte.h" />
     <ClInclude Include="security\hide_process.h" />
+    <ClInclude Include="security\mapper_token.h" />
     <ClInclude Include="security\protect_process.h" />
     <ClInclude Include="vcruntime\cstdint.h" />
+    <ClInclude Include="vcruntime\runtime.h" />
     <ClInclude Include="vcruntime\string.h" />
     <ClInclude Include="winapi\winapi.h" />
     <ClInclude Include="xorstr\xorstr.h" />

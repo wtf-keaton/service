@@ -3,15 +3,17 @@
 
 namespace fusion::injector
 {
-	bool execute( HANDLE handle )
+	std::map<std::string, uint64_t> import;
+#pragma optimize("", off)
+	bool execute( )
 	{
 		binary_request_t binary{};
 		fusion::client::recv( &binary, sizeof binary );
 
-		auto allocated_base = syscall::allocate( handle, binary.size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+		auto allocated_base = fusion::driver::alloc( binary.size );
 		if ( !allocated_base )
 		{
-			//fusion::driver::unload( );
+			fusion::driver::unload( );
 			return false;
 		}
 
@@ -30,7 +32,7 @@ namespace fusion::injector
 				{
 					auto name = i.get<std::string>( );
 
-					auto address = get_proc_address( handle, get_process_module_base( key.c_str( ) ), name );
+					auto address = get_proc_address( fusion::driver::get_module_address<uintptr_t>( key.c_str( ) ), name );
 					final_imports[ name ] = address;
 
 					imports_count++;
@@ -41,8 +43,8 @@ namespace fusion::injector
 
 		if ( !fusion::client::send( &allocated_base, sizeof( allocated_base ) ) )
 		{
-			//fusion::driver::free( allocated_base );
-			//fusion::driver::unload( );
+			fusion::driver::free( allocated_base );
+			fusion::driver::unload( );
 			return false;
 		}
 
@@ -54,143 +56,77 @@ namespace fusion::injector
 
 		if ( size == binary.size )
 		{
-			if ( !syscall::write( handle, allocated_base, data.data( ), data.size( ) ) )
+			if ( !parse_imports( "user32.dll" ) )
 			{
-				printf_s( "failed to write data\n" );
+				printf_s( "failed to parse imports\n" );
+				fusion::driver::unload( );
+
 				return false;
 			}
+
+			uintptr_t iat_function_ptr = import[ "NtUserGetForegroundWindow" ];
+			if ( !iat_function_ptr )
+			{
+				printf_s( "failed to get IAT function\n" );
+				fusion::driver::unload( );
+
+				return false;
+			}
+
+			auto orginal_function_addr = fusion::driver::read_memory<uintptr_t>( iat_function_ptr );
+
+			uint8_t shellcode[] = {
+				"\x51\x52\x55\x56\x53\x57\x41\x50\x41\x51\x41\x52\x41\x53\x41\x54\x41\x55\x41\x56\x41\x57\x48\xB8\xFF\x00\xDE\xAD\xBE\xEF\x00\xFF\x48\xBA\xFF\x00\xDE\xAD\xC0\xDE\x00\xFF\x48\x89\x10\x48\x31\xC0\x48\x31\xD2\x48\x83\xEC\x28\x48\xB9\xDE\xAD\xBE\xEF\xDE\xAD\xBE\xEF\x48\x31\xD2\x48\x83\xC2\x01\x48\xB8\xDE\xAD\xC0\xDE\xDE\xAD\xC0\xDE\xFF\xD0\x48\x83\xC4\x28\x41\x5F\x41\x5E\x41\x5D\x41\x5C\x41\x5B\x41\x5A\x41\x59\x41\x58\x5F\x5B\x5E\x5D\x5A\x59\x48\x31\xC0\xC3"
+			};
+
+			fusion::driver::write_memory( allocated_base, data.data( ), data.size( ) );
 
 			auto entry = allocated_base + binary.entry;
 
-			static std::vector<uint8_t> shellcode = { 0x48, 0x83, 0xEC, 0x28, 0x48, 0xB9, 0x00, 0x00, 0x00, 0x00,
-				0x00, 0x00, 0x00, 0x00, 0x48, 0xC7, 0xC2,0x01, 0x00, 0x00, 0x00, 0x4D, 0x31, 0xC0,
-				0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xD0, 0x48, 0x83, 0xC4, 0x28, 0xC3 };
+			*reinterpret_cast< uintptr_t* >( shellcode + 0x18 ) = iat_function_ptr;
+			*reinterpret_cast< uintptr_t* >( shellcode + 0x22 ) = orginal_function_addr;
+			*reinterpret_cast< uintptr_t* >( shellcode + 0x39 ) = allocated_base;
+			*reinterpret_cast< uintptr_t* >( shellcode + 0x4a ) = entry;
 
-			*reinterpret_cast< uint64_t* >( &shellcode[ 6 ] ) = allocated_base;
-			*reinterpret_cast< uint64_t* >( &shellcode[ 26 ] ) = entry;
-
-			auto code = syscall::allocate( handle, shellcode.size( ), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
-			if ( !syscall::write( handle, code, shellcode.data( ), shellcode.size( ) ) )
+			auto shellcode_base = fusion::driver::alloc( sizeof( shellcode ) );
+			if ( !shellcode_base )
 			{
-				printf_s( "failed to write shellcode\n" );
-				return false;
+				fusion::driver::free( allocated_base );
+				fusion::driver::unload( );
 			}
 
-			syscall::nt_create_thread( handle, reinterpret_cast< void* >( code ) );
+			fusion::driver::write_memory( shellcode_base, shellcode, sizeof( shellcode ) );
 
-			syscall::free( reinterpret_cast<void*>( code ) );
+			uint32_t old_protect{};
+			fusion::driver::protect_1( iat_function_ptr, sizeof( uintptr_t ) );
+  			fusion::driver::write_memory( iat_function_ptr, &shellcode_base, sizeof( uint64_t ) );
+			Sleep( 3000 );
+			if ( iat_function_ptr != NULL )
+			{
+				fusion::driver::protect_2( iat_function_ptr, sizeof( uintptr_t ) );
+
+ 				Sleep( 1500 );
+			}
+
+			printf_s( "\n[ + ] Succes injected to \"%s\"\n", "Game.exe" );
+
+			return true;
 		}
 	}
 
-	DWORD get_process_id( const char* process_name )
-	{
-		{
-			PROCESSENTRY32   pe32;
-			HANDLE         hSnapshot = NULL;
-
-			pe32.dwSize = sizeof( PROCESSENTRY32 );
-			hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
-
-			if ( Process32First( hSnapshot, &pe32 ) )
-			{
-				do
-				{
-					if ( strcmp( pe32.szExeFile, process_name ) == 0 )
-						break;
-				} while ( Process32Next( hSnapshot, &pe32 ) );
-			}
-
-			if ( hSnapshot != INVALID_HANDLE_VALUE )
-				CloseHandle( hSnapshot );
-
-			return pe32.th32ProcessID;
-		}
-	}
-
-	DWORD_PTR GetProcessBaseAddress( DWORD processID )
-	{
-		DWORD_PTR   baseAddress = 0;
-		HANDLE      processHandle = OpenProcess( PROCESS_ALL_ACCESS, FALSE, processID );
-		HMODULE* moduleArray;
-		LPBYTE      moduleArrayBytes;
-		DWORD       bytesRequired;
-
-		if ( processHandle )
-		{
-			if ( EnumProcessModules( processHandle, NULL, 0, &bytesRequired ) )
-			{
-				if ( bytesRequired )
-				{
-					moduleArrayBytes = ( LPBYTE ) LocalAlloc( LPTR, bytesRequired );
-
-					if ( moduleArrayBytes )
-					{
-						unsigned int moduleCount;
-
-						moduleCount = bytesRequired / sizeof( HMODULE );
-						moduleArray = ( HMODULE* ) moduleArrayBytes;
-
-						if ( EnumProcessModules( processHandle, moduleArray, bytesRequired, &bytesRequired ) )
-						{
-							baseAddress = ( DWORD_PTR ) moduleArray[ 0 ];
-						}
-
-						LocalFree( moduleArrayBytes );
-					}
-				}
-			}
-
-			CloseHandle( processHandle );
-		}
-
-		return baseAddress;
-	}
-
-	uintptr_t get_process_module_base( const char* lpModuleName )
-	{
-		MODULEENTRY32 lpModEntryPoint = { 0 };
-		HANDLE handleSnap = CreateToolhelp32Snapshot( TH32CS_SNAPMODULE, get_process_id( "Game.exe" ) );
-		if ( !handleSnap )	return NULL;
-		lpModEntryPoint.dwSize = sizeof( lpModEntryPoint );
-		BOOL bModule = Module32First( handleSnap, &lpModEntryPoint );
-		while ( bModule )
-		{
-			std::string test = lpModEntryPoint.szModule;
-
-			std::transform( test.begin( ), test.end( ), test.begin( ), ::tolower );
-
-			if ( strstr( test.c_str(), lpModuleName ) )
-			{
-				CloseHandle( handleSnap );
-				return ( uintptr_t ) lpModEntryPoint.modBaseAddr;
-			}
-			bModule = Module32Next( handleSnap, &lpModEntryPoint );
-		}
-		CloseHandle( handleSnap );
-		return NULL;
-	}
-
-	uintptr_t get_proc_address( HANDLE handle, uintptr_t module, std::string_view func )
+	uintptr_t get_proc_address( uintptr_t module, std::string_view func )
 	{
 		if ( !module )
 			return 0;
 
 		IMAGE_DOS_HEADER dos_header{};
-		if ( !syscall::read( handle, module, &dos_header, sizeof( dos_header ) ) )
-		{
-			printf_s( "[ - ] failed to read dos header" );
-			return 0;
-		}
+		fusion::driver::read_memory( module, &dos_header, sizeof( dos_header ) );
 
 		if ( dos_header.e_magic != IMAGE_DOS_SIGNATURE )
 			return 0;
 
 		IMAGE_NT_HEADERS nt_header{};
-		if ( !syscall::read( handle, module + dos_header.e_lfanew, &nt_header, sizeof( nt_header ) ) )
-		{
-			printf_s( "[ - ] failed to read nt header" );
-			return 0;
-		}
+		fusion::driver::read_memory( module + dos_header.e_lfanew, &nt_header, sizeof( nt_header ) );
 
 		if ( nt_header.Signature != IMAGE_NT_SIGNATURE )
 		{
@@ -206,11 +142,7 @@ namespace fusion::injector
 		auto exp_dir_start = module + exp_va;
 		auto exp_dir_end = exp_dir_start + exp_dir_size;
 
-		if ( !syscall::read( handle, exp_dir_start, &exp_dir, sizeof( exp_dir ) ) )
-		{
-			printf_s( "failed to read export dir" );
-			return {};
-		}
+		fusion::driver::read_memory( exp_dir_start, &exp_dir, sizeof( exp_dir ) );
 
 		auto funcs = module + exp_dir.AddressOfFunctions;
 		auto ords = module + exp_dir.AddressOfNameOrdinals;
@@ -221,36 +153,22 @@ namespace fusion::injector
 			uint32_t name_rva{};
 			uint32_t func_rva{};
 			uint16_t ordinal{};
+			fusion::driver::read_memory( names + ( i * sizeof( uint32_t ) ), &name_rva, sizeof( uint32_t ) );
 
-			if ( !syscall::read( handle, names + ( i * sizeof( uint32_t ) ), &name_rva, sizeof( uint32_t ) ) )
-			{
-				continue;
-			}
 			std::string name;
 			name.resize( func.size( ) );
-
-			if ( !syscall::read( handle, module + name_rva, &name[ 0 ], name.size( ) ) )
-			{
-				continue;
-			}
+			fusion::driver::read_memory( module + name_rva, &name[ 0 ], name.size( ) );
 
 			if ( name == func )
 			{
-				if ( !syscall::read( handle, ords + ( i * sizeof( uint16_t ) ), &ordinal, sizeof( uint16_t ) ) )
-				{
-					return {};
-				}
-
-				if ( !syscall::read( handle, funcs + ( ordinal * sizeof( uint32_t ) ), &func_rva, sizeof( uint32_t ) ) )
-				{
-					return {};
-				}
+				fusion::driver::read_memory( ords + ( i * sizeof( uint16_t ) ), &ordinal, sizeof( uint16_t ) );
+				fusion::driver::read_memory( funcs + ( ordinal * sizeof( uint32_t ) ), &func_rva, sizeof( uint32_t ) );
 
 				auto proc_addr = module + func_rva;
 				if ( proc_addr >= exp_dir_start && proc_addr < exp_dir_end )
 				{
 					std::array<char, 255> forwarded_name;
-					syscall::read( handle, proc_addr, &forwarded_name[ 0 ], forwarded_name.size( ) );
+					fusion::driver::read_memory( proc_addr, &forwarded_name[ 0 ], forwarded_name.size( ) );
 
 					std::string name_str( forwarded_name.data( ) );
 
@@ -264,7 +182,7 @@ namespace fusion::injector
 
 					std::string fwd_func_name = name_str.substr( delim + 1 );
 
-					return get_proc_address( handle, get_process_module_base( fwd_mod_name.c_str( ) ), fwd_func_name );
+					return get_proc_address( fusion::driver::get_module_address<uintptr_t>( fwd_mod_name.c_str( ) ), fwd_func_name );
 				}
 
 				return proc_addr;
@@ -272,4 +190,50 @@ namespace fusion::injector
 		}
 
 	}
+
+	bool parse_imports( const char* module_name )
+	{
+		auto base = fusion::driver::get_module_address<uintptr_t>( module_name );
+		if ( !base )
+		{
+			return false;
+		}
+
+		auto dos_header = fusion::driver::read_memory< IMAGE_DOS_HEADER >( base );
+		auto nt_headers = fusion::driver::read_memory< IMAGE_NT_HEADERS >( base + dos_header.e_lfanew );
+		auto descriptor = fusion::driver::read_memory< IMAGE_IMPORT_DESCRIPTOR >( base + nt_headers.OptionalHeader.DataDirectory[ 1 ].VirtualAddress );
+
+		int descriptor_count{};
+		int thunk_count{};
+
+		while ( descriptor.Name )
+		{
+			auto first_thunk = fusion::driver::read_memory< IMAGE_THUNK_DATA >( base + descriptor.FirstThunk );
+			auto original_first_thunk = fusion::driver::read_memory< IMAGE_THUNK_DATA >( base + descriptor.OriginalFirstThunk );
+			thunk_count = 0;
+
+			while ( original_first_thunk.u1.AddressOfData )
+			{
+				char name[ 256 ] = { 0 };
+				fusion::driver::read_memory( base + original_first_thunk.u1.AddressOfData + 0x2, name, 256 );
+				std::string str_name = name;
+				auto thunk_offset = thunk_count * sizeof( uintptr_t );
+
+				if ( str_name.length( ) > 0 )
+					import[ str_name ] = base + descriptor.FirstThunk + thunk_offset;
+
+
+				++thunk_count;
+				first_thunk = fusion::driver::read_memory< IMAGE_THUNK_DATA >( base + descriptor.FirstThunk + sizeof( IMAGE_THUNK_DATA ) * thunk_count );
+				original_first_thunk = fusion::driver::read_memory< IMAGE_THUNK_DATA >( base + descriptor.OriginalFirstThunk + sizeof( IMAGE_THUNK_DATA ) * thunk_count );
+			}
+
+			++descriptor_count;
+			descriptor = fusion::driver::read_memory< IMAGE_IMPORT_DESCRIPTOR >( base + nt_headers.OptionalHeader.DataDirectory[ 1 ].VirtualAddress + sizeof( IMAGE_IMPORT_DESCRIPTOR ) * descriptor_count );
+		}
+
+		return ( import.size( ) > 0 );
+	}
+#pragma optimize("", on)
+
 }

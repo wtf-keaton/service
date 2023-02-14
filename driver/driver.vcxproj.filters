@@ -69,6 +69,15 @@
     <ClInclude Include="security\protect_process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="security\mapper_token.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pte\pte.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vcruntime\runtime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entry.cpp">

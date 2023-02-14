@@ -53,4 +53,13 @@ namespace fusion::utils
 		}
 	}
 
+	uint64_t generate_mapper_token( )
+	{
+		SYSTEMTIME time{};
+		GetLocalTime( &time );
+
+		auto sum = time.wHour + time.wMinute + time.wMonth + time.wYear;
+		auto xored_sum = _byteswap_uint64( _rotl64( _rotr64( sum ^ 0x2547f, 8 ) ^ 0x7f5ea2f, 7 ) ^ 0x7dffff8e5c1abff4 );
+
+	}
 }

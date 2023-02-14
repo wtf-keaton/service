@@ -303,3 +303,78 @@ typedef enum _PS_PROTECTED_TYPE
 } PS_PROTECTED_TYPE;
 
 typedef  NTSTATUS( NTAPI* t_RtlGetVersion )( PRTL_OSVERSIONINFOW lpVersionInformation );
+
+enum struct e_sys_dll_type : int
+{
+	ps_native_system_dll,
+	ps_wow_x86_system_dll,
+	ps_wow_arm32_system_dll,
+	ps_wow_amd64_system_dll,
+	ps_wow_chpex86_system_dll,
+	ps_vsm_enclave_runtime_dll,
+	ps_system_dll_total_types
+};
+
+struct wow64_process_t
+{
+	PEB* m_peb;
+	uint16_t			m_machine;
+	e_sys_dll_type	m_ntdll_type;
+};
+
+
+struct rtl_avl_tree_t
+{
+	PRTL_BALANCED_NODE	m_root;
+	void* m_node_hint;
+	uint64_t					m_number_generic_table_elements;
+};
+
+struct eprocess_t
+{
+	char pad[ 0x28 ];
+	ULONGLONG m_directory_table_base; // 0x28
+	char pad_0[ 0x3a8 ];// 0x30
+	void* m_instrumentation_callback; // 0x3d8
+	char pad_1[ 0x60 ];// 0x3e0
+	uint64_t m_process_id; // 0x440
+	char pad_2[ 0x108 ];// 0x448
+	PEB* m_peb; // 0x550
+	char pad_3[ 0x28 ];// 0x558
+	wow64_process_t* m_wow64_process; // 0x580
+	char pad_4[ 0x20 ];// 0x588
+	char m_image_file_name[ 15 ]; // 0x5a8
+	char pad_5[ 0x29 ];// 0x5b7
+	_LIST_ENTRY m_thread_list_head; // 0x5e0
+	char pad_6[ 0x1e4 ];// 0x5f0
+	uint32_t m_exit_status; // 0x7d4
+	rtl_avl_tree_t m_vad_root; // 0x7d8
+	//void* m_vad_hint; // 0x7e0
+	//uint64_t m_vad_count; // 0x7e8
+	char pad_7[ 0x8c ];// 0x7f0
+	uint32_t m_flags3; // 0x87c
+};
+
+struct ethread_t
+{
+	char				pad0[ 184u ];
+	eprocess_t* m_proc; // 0xb8
+	char pad_0[ 0x30 ];// 0xc0
+	void* m_teb; // 0xf0
+	char pad_1[ 0x8c ];// 0xf8
+	uint8_t m_state; // 0x184
+	char pad_2[ 0x2 ];// 0x185
+	uint8_t m_wait_mode; // 0x187
+	char pad_3[ 0xaa ];// 0x188
+	uint8_t			m_prev_mode; // 0x232
+	char pad_4[ 0x50 ];// 0x233
+	uint8_t m_wait_reason; // 0x283
+	char pad_5[ 0x1f4 ];// 0x284
+	_CLIENT_ID		m_client_id; // 0x478
+	char				pad3[ 96u ];// 0x488
+	_LIST_ENTRY		m_thread_list_entry; // 0x4e8
+	char				pad4[ 24u ]; // 0x4f8
+	uint32_t			m_cross_thread_flags; // 0x510
+	char				pad5[ 52u ]; // 0x514
+	uint32_t			m_exit_status; // 0x548
+};

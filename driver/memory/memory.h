@@ -2,26 +2,26 @@
 
 namespace fusion::memory
 {
-	__forceinline NTSTATUS read_memory( HANDLE process_handle, void* address, void* target, size_t size )
+	NTSTATUS read_memory( HANDLE process_handle, void* address, void* buffer, size_t size )
 	{
 		size_t bytes{};
 		PEPROCESS target_process{};
 
 		fusion::imports::ps_lookup_process_by_process_id( process_handle, &target_process );
+		return fusion::imports::mm_copy_virutal_memory( target_process, address, PsGetCurrentProcess( ), buffer, size, KernelMode, &bytes );
 
-		return fusion::imports::mm_copy_virutal_memory( target_process, address, PsGetCurrentProcess( ), target, size, KernelMode, &bytes );
 	}
 
-	__forceinline NTSTATUS write_memory( HANDLE process_handle, void* address, void* target, size_t size )
+	NTSTATUS write_memory( HANDLE process_handle, void* address, void* buffer, size_t size )
 	{
 		size_t bytes{};
 		PEPROCESS target_process{};
 
 		fusion::imports::ps_lookup_process_by_process_id( process_handle, &target_process );
-		return fusion::imports::mm_copy_virutal_memory( PsGetCurrentProcess( ), address, target_process, target, size, KernelMode, &bytes );
+		return fusion::imports::mm_copy_virutal_memory( IoGetCurrentProcess( ), buffer, target_process, address, size, KernelMode, &bytes );
 	}
 
-	__forceinline BOOL get_request_data( void* dest, void* src, size_t size )
+	BOOL get_request_data( void* dest, void* src, size_t size )
 	{
 		size_t bytes{};
 		if ( NT_SUCCESS( fusion::imports::mm_copy_virutal_memory( PsGetCurrentProcess( ), src, 	PsGetCurrentProcess( ), dest, size, KernelMode, &bytes ) ) && size == bytes )
@@ -30,11 +30,5 @@ namespace fusion::memory
 		}
 
 		return false;
-	}
-
-	__forceinline NTSTATUS start_routine( HANDLE handle, uintptr_t address )
-	{
-
-		return STATUS_SUCCESS;
 	}
 }

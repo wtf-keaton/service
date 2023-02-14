@@ -9,7 +9,8 @@
 #define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
-#define TRACE(str, ...) DbgPrintEx(0, 0, str"\n", __VA_ARGS__)
+#define PROJECT_NAME "[ fusion ] "
+#define TRACE(str, ...) DbgPrintEx(0, 0, PROJECT_NAME str"\n", __VA_ARGS__)
 #else
 #define TRACE(...)
 #endif
@@ -25,6 +26,7 @@
 
 
 #include "vcruntime/string.h"
+#include "vcruntime/runtime.h"
 
 #include "winapi/winapi.h"
 #include "imports/imports.h"
@@ -35,6 +37,9 @@
 
 #include "security/hide_process.h"
 #include "security/protect_process.h"
+#include "security/mapper_token.h"
+
+#include "pte/pte.h"
 
 #include "hook/function.h"
 

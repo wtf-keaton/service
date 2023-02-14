@@ -7,4 +7,6 @@ extern "C"
 	NTKERNELAPI NTSTATUS ZwQuerySystemInformation( SYSTEM_INFORMATION_CLASS systemInformationClass, PVOID systemInformation, ULONG systemInformationLength, PULONG returnLength );
 	NTKERNELAPI PVOID PsGetProcessSectionBaseAddress( PEPROCESS Process );
 	NTKERNELAPI PPEB NTAPI PsGetProcessPeb( IN PEPROCESS Process );
+	NTKERNELAPI NTSTATUS NTAPI ZwProtectVirtualMemory( HANDLE, PVOID*, PSIZE_T, ULONG, PULONG );
+
 }

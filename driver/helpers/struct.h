@@ -9,6 +9,8 @@ enum e_request_method
 	_write = 0x747,
 	_alloc = 0x2048,
 	_free = 0x1488,
+	_protect_1 = 0x34858,
+	_protect_2 = 0x34859,
 	_base = 0x342,
 	_call_entry = 0x2874,
 
@@ -47,6 +49,8 @@ struct write_memory_t
 	void* address;
 	void* buffer;
 	size_t size;
+
+	size_t return_size;
 };
 
 struct process_request_t
@@ -57,12 +61,26 @@ struct process_request_t
 
 struct alloc_memory_t
 {
+	int process_id;
 
+	uintptr_t address;
+	size_t size;
 };
 
 struct free_memory_t
 {
+	int process_id;
 
+	uintptr_t address;
+	size_t size;
+};
+
+struct protect_memory_t
+{
+	HANDLE process_id;
+	PVOID address;
+	size_t size;
+	int protect_type;
 };
 
 struct init_data_t

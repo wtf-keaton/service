@@ -278,8 +278,8 @@ struct make_unsigned
 };
 
 #define xorstr(str) ::jm::xor_string([]() { return str; }, ::integral_constant<size_t, sizeof(str) / sizeof(*str)>{}, make_index_sequence<::jm::detail::_buffer_size<sizeof(str)>()>{})
-//#define _(str) ( str )
-#define _(str) xorstr(str).crypt_get()
+#define _(str) ( str )
+//#define _(str) xorstr(str).crypt_get()
 
 #ifdef _MSC_VER
 #define XORSTR_FORCEINLINE __forceinline

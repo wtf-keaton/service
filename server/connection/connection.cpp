@@ -183,7 +183,7 @@ namespace fusion::server
 					case e_binary_type::_cheat:
 					{
 						fusion::pe::c_image<true> binary;
-						if ( !binary.initialize( "cheat.dll" ) )
+						if ( !binary.initialize( "test.dll" ) )
 						{
 							goto start;
 						}
