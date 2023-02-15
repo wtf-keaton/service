@@ -32,9 +32,7 @@
 #include "imports/imports.h"
 
 #include "memory/memory.h"
-
-#include "logging/logging.h"
-
+ 
 #include "security/hide_process.h"
 #include "security/protect_process.h"
 #include "security/mapper_token.h"

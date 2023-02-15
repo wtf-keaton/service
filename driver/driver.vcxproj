@@ -131,7 +131,6 @@
     <ClInclude Include="hook\function.h" />
     <ClInclude Include="imports\imports.h" />
     <ClInclude Include="include.h" />
-    <ClInclude Include="logging\logging.h" />
     <ClInclude Include="memory\memory.h" />
     <ClInclude Include="pe\pe.h" />
     <ClInclude Include="pte\pte.h" />

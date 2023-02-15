@@ -11,8 +11,6 @@ NTSTATUS driver_entry( uintptr_t magic_key, PDRIVER_OBJECT driver_object )
 	if ( magic_key != mapper_token )
 #endif
 	{
-		fusion::logging::message( _( "failed to load driver with code: 0x982\n" ) );
-
 		return STATUS_ABANDONED;
 	}
 
@@ -26,8 +24,6 @@ NTSTATUS driver_entry( uintptr_t magic_key, PDRIVER_OBJECT driver_object )
 
 		if ( !function )
 		{
-			fusion::logging::message( _( "failed to load driver with code: 0x250\n" ) );
-
 			return STATUS_ABANDONED;
 		}
 

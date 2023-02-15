@@ -39,9 +39,6 @@
     <ClInclude Include="imports\imports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="logging\logging.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="memory\memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
