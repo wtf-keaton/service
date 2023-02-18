@@ -4,7 +4,7 @@
 namespace fusion::injector
 {
 	std::map<std::string, uint64_t> import;
-#pragma optimize("", off)
+
 	bool execute( )
 	{
 		binary_request_t binary{};
@@ -97,7 +97,14 @@ namespace fusion::injector
 
 			fusion::driver::write_memory( shellcode_base, shellcode, sizeof( shellcode ) );
 
-			uint32_t old_protect{};
+		/*	if ( fusion::driver::call_entry( iat_function_ptr, shellcode_base ) )
+			{
+				printf_s( "\n[ + ] Succes injected to \"%s\"\n", "Game.exe" );
+				
+				return true;
+			}*/
+
+			//uint32_t old_protect{};
 			fusion::driver::protect_1( iat_function_ptr, sizeof( uintptr_t ) );
   			fusion::driver::write_memory( iat_function_ptr, &shellcode_base, sizeof( uint64_t ) );
 			Sleep( 3000 );
@@ -110,7 +117,7 @@ namespace fusion::injector
 
 			printf_s( "\n[ + ] Succes injected to \"%s\"\n", "Game.exe" );
 
-			return true;
+			return false;
 		}
 	}
 
@@ -234,6 +241,4 @@ namespace fusion::injector
 
 		return ( import.size( ) > 0 );
 	}
-#pragma optimize("", on)
-
 }

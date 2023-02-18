@@ -16,6 +16,7 @@ enum e_request_result
 	_error_userkey = 2386 << 1,
 	_error_subscribe_end = 8641 << 1,
 	_error_banned = 9043 << 1,
+	_error_freezed = 3571 << 1,
 };
 
 enum e_binary_type
@@ -38,6 +39,8 @@ struct user_info_request_t
 {
 	char game[ 64 ];
 	char end_date[ 32 ];
+	char game_process[ 64 ];
+
 };
 
 struct request_t

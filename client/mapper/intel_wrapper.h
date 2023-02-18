@@ -178,7 +178,7 @@ public:
 
 		if ( !nt_shutdown_system )
 		{
-			nt_shutdown_system = get_kernel_export( get_kernel_module_base( _( "ntoskrnl.exe" ) ), HASH( "NtShutdownSystem" ) );
+			nt_shutdown_system = get_kernel_export( get_kernel_module_base( _( "ntoskrnl.exe" ) ), HASH( "NtAddAtom" ) );
 			if ( !nt_shutdown_system )
 				return 0;
 
@@ -194,9 +194,9 @@ public:
 			return false;
 
 		if constexpr ( !is_void_call )
-			*out_result = fusion::syscall::sys_call< _ty, args... >( HASH( "NtShutdownSystem" ), arguments... );
+			*out_result = fusion::syscall::sys_call< _ty, args... >( HASH( "NtAddAtom" ), arguments... );
 		else
-			fusion::syscall::sys_call< void, args... >( HASH( "NtShutdownSystem" ), arguments... );
+			fusion::syscall::sys_call< void, args... >( HASH( "NtAddAtom" ), arguments... );
 
 		write_to_read_only( nt_shutdown_system, orig_bytes, sizeof( jmp ) );
 		return true;

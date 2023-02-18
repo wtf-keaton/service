@@ -38,3 +38,6 @@
 /client_test/.vs
 /client_test/bin
 /client_test/obj
+/client_gui/.vs
+/client_gui/bin
+/client_gui/obj

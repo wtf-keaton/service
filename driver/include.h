@@ -3,10 +3,8 @@
 #include <ntddk.h>
 #include <windef.h>
 #include <ntimage.h>
-#include <ntstrsafe.h>
 
-#pragma once( lib, "ntstrsafe.lib" )
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 #ifdef DEBUG_OUTPUT
 #define PROJECT_NAME "[ fusion ] "

@@ -21,9 +21,12 @@
 #include "../pe/pe.h"
 
 #include "../helpers/structs.h"
+#include "event.h"
 
 namespace fusion::server
 {
+	//c_events<> connect_event;
+
 	bool setup_server( int );
 
 	void listen( );
@@ -38,7 +41,7 @@ namespace fusion::server
 
 	bool recv( WOLFSSL* con_socket, void* buf, size_t size );
 
-	int send( WOLFSSL* ssl, std::vector<char>& data, float* dur = nullptr );
+	int send( WOLFSSL* ssl, std::vector<char>& data );
 
 	int recv( WOLFSSL* ssl, std::vector<char>& out );
 
@@ -51,11 +54,11 @@ namespace fusion::server
 
 	bool recv( int con_socket, void* buf, size_t size );
 
-	int stream( int con_socket, std::vector<char>& data, float* dur = nullptr );
+	int send( int con_socket, std::vector<char>& data );
 
-	int read_stream( int con_socket, std::vector<char>& out );
+	int recv( int con_socket, std::vector<char>& out );
 
-	int read_stream( int con_socket, std::string& str );
+	int recv( int con_socket, std::string& str );
 
 	bool send( int con_socket, std::string data );
 #endif

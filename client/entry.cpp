@@ -118,8 +118,9 @@ int main( )
 	//	fusion::syscall::sleep( 5000 );
 	//	return 1;
 	//}
+	request_t request{};
 
-	if ( !fusion::client::connect( 1488 ) )
+	/*if ( !fusion::client::connect( 1488 ) )
 	{
 		fusion::syscall::printf( _( "ERROR[03] FAILED TO CONNECT TO SERVER\n" ) );
 		fusion::syscall::sleep( 5000 );
@@ -127,7 +128,7 @@ int main( )
 	}
 	request_t request{};
 
-	/*memset( &request, 0, sizeof request );
+	memset( &request, 0, sizeof request );
 	request.active_hwid_hash = HASH( "current_hwid" );
 	request.request_type = e_request_type::_get_binary;
 	request.binary_type = e_binary_type::_driver;
@@ -155,17 +156,27 @@ int main( )
 		return 0;
 	}*/
 
-	/*if ( !fusion::driver::init_driver( ) )
+	if ( !fusion::driver::init_driver( ) )
 		return 0;
 
-	fusion::driver::hide_process( );
-	fusion::driver::protect_process( );*/
+	if ( !fusion::driver::check_loaded( ) )
+	{
+		fusion::driver::unload( );
+
+		return 1;
+	}
+	fusion::driver::unload( );
+
+	//fusion::driver::hide_process( );
+	//fusion::driver::protect_process( );
+
+	//fusion::driver::unload( );
 
 	char key[ 32 ];
 	fusion::syscall::printf( _( "ENTER YOUR KEY: " ) );
 	std::cin >> key;
 
-	request.active_hwid_hash = HASH( "current_hwid" );
+	request.active_hwid_hash = 0xfffff;
 	request.request_type = e_request_type::_authorization;
 
 	strcpy_s( request.key, key );
@@ -185,7 +196,7 @@ int main( )
 				Sleep( 100 );
 
 			memset( &request, 0, sizeof request );
-			request.active_hwid_hash = HASH( "current_hwid" );
+			request.active_hwid_hash = 0xfffff;
 			request.request_type = e_request_type::_get_binary;
 			request.binary_type = e_binary_type::_cheat;
 
@@ -194,35 +205,10 @@ int main( )
 
 
 			fusion::client::send( &request, sizeof request );
-			if ( !fusion::driver::init_driver( "Game.exe" ) )
-				return 0;
 
-			if ( !fusion::driver::check_loaded( ) )
-			{
-				fusion::driver::unload( );
-
-				return 1;
-			}
 
 			fusion::injector::execute( );
-			/*g_intel_wrapper = reinterpret_cast< c_intel_wrapper* >( malloc( sizeof( c_intel_wrapper ) ) );
-			__stosb( reinterpret_cast< PBYTE >( g_intel_wrapper ), 0, sizeof( c_intel_wrapper ) );
 
-			if ( !g_intel_wrapper->load( ) )
-			{
-				g_intel_wrapper->unload( );
-				free( g_intel_wrapper );
-				fusion::syscall::sleep( 5000 );
-				return 1;
-			}
-
-			if ( !drv_mapper::map_driver( ) )
-			{
-				g_intel_wrapper->unload( );
-				free( g_intel_wrapper );
-				fusion::syscall::sleep( 5000 );
-				return 0;
-			}*/
 
 			fusion::syscall::sleep( 5000 );
 			fusion::driver::unload( );

@@ -7,6 +7,7 @@ NTSTATUS driver_entry( uintptr_t magic_key, PDRIVER_OBJECT driver_object )
 	if ( magic_key != 0xffffff78504887 )
 #else
 	auto mapper_token = fusion::security::generate_mapper_token( );
+	TRACE( "0x%llx", mapper_token );
 
 	if ( magic_key != mapper_token )
 #endif

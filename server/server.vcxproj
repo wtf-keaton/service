@@ -140,16 +140,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="api\api.cpp" />
     <ClCompile Include="connection\connection.cpp" />
     <ClCompile Include="encryption\encryption.cpp" />
     <ClCompile Include="entry.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="api\api.h" />
     <ClInclude Include="connection\connection.h" />
+    <ClInclude Include="connection\event.h" />
     <ClInclude Include="encryption\encryption.h" />
     <ClInclude Include="file\file.h" />
     <ClInclude Include="hash\hash.h" />
     <ClInclude Include="helpers\structs.h" />
+    <ClInclude Include="httplib\httplib.h" />
     <ClInclude Include="json\json.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="pe\pe.h" />

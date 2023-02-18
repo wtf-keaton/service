@@ -3,6 +3,7 @@
 #include "../hash/hash.h"
 #include "../encryption/encryption.h"
 
+#include "../api/api.h"
 namespace fusion::server
 {
 	SOCKET m_socket;
@@ -36,7 +37,7 @@ namespace fusion::server
 		}
 		fusion::logger::debug( "winsock startup success" );
 #endif
-		m_socket = socket( AF_INET, SOCK_STREAM, NULL );
+		m_socket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 		if ( m_socket < 0 )
 		{
 			logger::error( "failed to init socket with error: {}", GetLastError( ) );
@@ -108,35 +109,16 @@ namespace fusion::server
 		switch ( request.request_type )
 		{
 			case e_request_type::_authorization:
-				if ( strstr( request.key, "inject_key" ) )
-				{
-					if ( request.active_hwid_hash != HASH( "current_hwid" ) )
-					{
-						fusion::logger::error( "\"{}\" Hwid missmatch", user_ip );
-						result = e_request_result::_error_hwid_missmatch;
-						fusion::server::send( ssl, &result, sizeof( result ) );
-					}
-					else
-					{
-						fusion::logger::debug( "All okay" );
+				
+				result = api::auth( request.key, std::to_string( request.active_hwid_hash ).c_str( ) );
 
-						result = e_request_result::_success;
-						fusion::server::send( ssl, &result, sizeof( result ) );
-					}
-					goto start;
-				}
-				else
-				{
-					fusion::logger::error( "Key invalid" );
-					result = e_request_result::_error_userkey;
-					fusion::server::send( ssl, &result, sizeof( result ) );
-				}
+				fusion::server::send( ssl, &result, sizeof( result ) );
 
-
-				wolfSSL_free( ssl );
+				goto start;
 				break;
 
 			case e_request_type::_get_binary:
+			{
 
 				fusion::logger::debug( "user \"{}\" requested binary", user_ip );
 
@@ -183,17 +165,21 @@ namespace fusion::server
 					case e_binary_type::_cheat:
 					{
 						fusion::pe::c_image<true> binary;
-						if ( !binary.initialize( "test.dll" ) )
+						if ( !binary.initialize( ( api::get_path( request.key ) + "\\binary.bin" ).c_str( ) ) )
 						{
 							goto start;
 						}
+
 						binary_request_t binary_request{};
 						binary_request.size = binary.image( )->get_nt_headers( )->optional_header.size_image;
 						binary_request.entry = binary.image( )->get_nt_headers( )->optional_header.entry_point;
 
 						strcpy_s( binary_request.imports, binary.get_imports( ).c_str( ) );
 
-						fusion::server::send( ssl, &binary_request, sizeof( binary_request ) );
+						if ( !fusion::server::send( ssl, &binary_request, sizeof( binary_request ) ) )
+						{
+							fusion::logger::error( "Failed to send binary data to client" );
+						}
 
 
 						uint64_t allocated_base = 0;
@@ -207,6 +193,7 @@ namespace fusion::server
 							fusion::server::recv( ssl, imports );
 
 							std::vector<char> data{};
+
 							binary.get_binary( data );
 							binary.relocate( data, allocated_base );
 							binary.fix_imports( data, imports );
@@ -217,14 +204,33 @@ namespace fusion::server
 							}
 						}
 
- 
+
 						goto start;
 						break;
 					}
 				}
 
 				break;
+			}
+			case e_request_type::_get_user_information:
+			{
+				user_info_request_t user_info{};
 
+				auto result = api::get_info( request.key );
+
+				if ( nlohmann::json::accept( result ) )
+				{
+					auto parsed = nlohmann::json::parse( result );
+					strcpy_s( user_info.game, parsed[ "Cheatname" ].get<std::string>( ).c_str( ) );
+					strcpy_s( user_info.end_date, parsed[ "Expire" ].get<std::string>( ).c_str( ) );
+					strcpy_s( user_info.game_process, parsed[ "Cheatprocess" ].get<std::string>( ).c_str( ) );
+				}
+
+				fusion::server::send( ssl, &user_info, sizeof( user_info ) );
+				goto start;
+
+				break;
+			}
 			case e_request_type::_ban_user:
 			{
 				fusion::logger::info( "user \"{}\" banned hwid {:x}", user_ip, request.active_hwid_hash );
@@ -267,9 +273,9 @@ namespace fusion::server
 #endif
 
 #ifdef SSL_ENABLE
-	int send( WOLFSSL* ssl, std::vector<char>& data, float* dur /*= nullptr*/ )
+	int send( WOLFSSL* ssl, std::vector<char>& data )
 #else
-	int send( int ssl, std::vector<char>& data, float* dur /*= nullptr*/ )
+	int send( int ssl, std::vector<char>& data )
 #endif
 	{
 		auto size = data.size( );
@@ -282,7 +288,6 @@ namespace fusion::server
 		constexpr size_t chunk_size = 4096;
 		size_t sent = 0;
 
-		auto start = std::chrono::steady_clock::now( );
 		while ( size > 0 )
 		{
 			auto to_send = std::min( size, chunk_size );
@@ -295,10 +300,6 @@ namespace fusion::server
 			sent += ret;
 			size -= ret;
 		}
-
-		auto end = std::chrono::steady_clock::now( );
-		std::chrono::duration<float> time = end - start;
-		if ( dur ) *dur = time.count( );
 
 		return sent;
 	}

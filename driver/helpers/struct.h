@@ -94,3 +94,12 @@ struct thread_init_t
 	
 	void* address;
 };
+
+struct entry_call_t
+{
+	HANDLE process_id;
+	uintptr_t address;
+	uintptr_t shellcode;
+
+	bool result;
+};

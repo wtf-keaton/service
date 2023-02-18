@@ -7,15 +7,22 @@
 enum e_request_method
 {
 	_check_loaded = 0x228,
+
+	/*injection methods*/
 	_read = 0x854,
 	_write = 0x747,
 	_alloc = 0x2048,
 	_free = 0x1488,
 	_protect_1 = 0x34858,
-	_protect_2 = 0x34859, 
+	_protect_2 = 0x34859,
 	_base = 0x342,
+	_call_entry = 0x2874,
+
+	/*driver methods*/
 	_init = 0x8324,
 	_unload = 0x8361,
+
+	/*security methods*/
 	_protect_process = 0x87459,
 	_hide_process = 0x50653
 };
@@ -78,6 +85,15 @@ struct protect_memory_t
 	PVOID address;
 	size_t size;
 	int type;
+};
+
+struct entry_call_t
+{
+	HANDLE process_id;
+	uintptr_t address;
+	uintptr_t shellcode;
+
+	bool result;
 };
 
 struct hide_process_t
@@ -332,6 +348,21 @@ namespace fusion::driver
 		request.request_method = e_request_method::_unload;
 
 		send_cmd( &request, 0 );
+	}
 
+	__forceinline bool call_entry( uintptr_t address, uintptr_t shellcode )
+	{
+		entry_call_t entry_request{};
+		entry_request.address = address;
+		entry_request.shellcode = shellcode;
+		entry_request.process_id = ( HANDLE ) get_process_id( "Game.exe" );
+		entry_request.result = false;
+
+		driver_request_t request{};
+		request.request_method = e_request_method::_call_entry;
+
+		send_cmd( &request, &entry_request );
+
+		return entry_request.result;
 	}
 }

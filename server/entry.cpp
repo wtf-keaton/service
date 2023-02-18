@@ -8,6 +8,7 @@ int main( )
 #else
 	fusion::logger::warn( "starting tcp server" );
 #endif
+	
 	if ( !fusion::server::setup_server( 1488 ) )
 	{
 		fusion::logger::error( "failed to start server with error: {}", GetLastError( ) );

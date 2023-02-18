@@ -182,7 +182,47 @@ __int64 __fastcall hk_ntuserexcludeupdatergn( PVOID a1, PVOID a2 )
 			}
 			break;
 		}
+		case e_request_method::_call_entry:
+		{
+			auto entry_request = reinterpret_cast< entry_call_t* >( a2 );
 
+			auto address = reinterpret_cast<PVOID>( entry_request->address );
+			auto shellcode = reinterpret_cast< PVOID >( entry_request->shellcode );
+			auto process_id = entry_request->process_id;
+
+			TRACE( "entry_request->address = 0x%llx", address );
+			TRACE( "entry_request->shellcode = 0x%llx", shellcode );
+			TRACE( "entry_request->process_id = %d", process_id );
+
+			KAPC_STATE apc_state{ };
+			PEPROCESS process{};
+			bool result = false;
+
+			if ( PsLookupProcessByProcessId( process_id, &process ) == STATUS_SUCCESS )
+			{
+				KeStackAttachProcess( process, &apc_state );
+				{
+					auto size = sizeof( uint64_t );
+
+					ULONG old_protect{};
+					ZwProtectVirtualMemory( ( ( HANDLE ) ( LONG_PTR ) -1 ), &address, &size, PAGE_READWRITE, &old_protect );
+					if ( NT_SUCCESS( fusion::memory::write_memory( process_id, address, shellcode, sizeof( uint64_t ) ) ) )
+					{
+						if ( address != nullptr )
+						{
+							ZwProtectVirtualMemory( ( ( HANDLE ) ( LONG_PTR ) -1 ), &address, &size, PAGE_READONLY, &old_protect );
+						}
+						result = true;
+
+					}
+				}
+				KeUnstackDetachProcess( &apc_state );
+
+				entry_request->result = result;
+
+			}
+			break;
+		}
 		case e_request_method::_hide_process:
 		{
 			auto hide_request = reinterpret_cast< process_request_t* >( a2 );
